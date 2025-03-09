@@ -93,6 +93,7 @@ lighthouse:
 ## Решение  8.
 ![рис 5](https://github.com/ysatii/ansible-hw3/blob/main/img/img_ansble5.jpg) 
 ![рис 6](https://github.com/ysatii/ansible-hw3/blob/main/img/img_ansble6.jpg) 
+произошла только часть изменений ктаких как перезапуск веб сервера и попытка создания таблиц
 
 ### Задание 9.
  Подготовьте README.md-файл по своему playbook. В нём должно быть описано: что делает playbook, какие у него есть параметры и теги.
