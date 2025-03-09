@@ -1,9 +1,56 @@
 ---
+- name: Install Vector
+  get_url:
+    url: "https://packages.timber.io/vector/0.34.0/vector-0.34.0-x86_64-unknown-linux-gnu.tar.gz"
+    dest: "/tmp/vector.tar.gz"
+
+- name: Extract Vector
+  unarchive:
+    src: "/tmp/vector.tar.gz"
+    dest: "/tmp"
+    remote_src: yes
+    mode: "0755"
+
+- name: Move Vector binary to /usr/local/bin
+  command: mv /tmp/vector-x86_64-unknown-linux-gnu/bin/vector /usr/local/bin/vector
+  args:
+    creates: /usr/local/bin/vector
+
+- name: Ensure Vector is executable
+  file:
+    path: "/usr/local/bin/vector"
+    mode: "0755"
+
+
+- name: Ensure Vector user exists
+  user:
+    name: vector
+    system: yes
+    createhome: no
+    shell: /bin/false
+
+- name: Ensure Vector data directory exists
+  file:
+    path: "/var/lib/vector/"
+    state: directory
+    owner: vector
+    group: vector
+    mode: "0755"
+    
 - name: Ensure Vector configuration directory exists
   file:
     path: "/etc/vector"
     state: directory
     mode: "0755"
+
+- name: Ensure Vector data directory exists
+  file:
+    path: "/var/lib/vector/"
+    state: directory
+    owner: vector
+    group: vector
+    mode: "0755"
+
 
 - name: Deploy Vector configuration from template
   template:

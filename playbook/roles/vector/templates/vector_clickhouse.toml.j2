@@ -2,7 +2,7 @@
 [sources.ssh_logs]
 type = "vector"
 mode = "ssh"
-address = "lamer@{{ hostvars['lighthouse-03'].ansible_host }}"
+address = "{{ remote_user }}@{{ lighthouse_host }}"
 command = "vector --config /etc/vector/vector_remote.toml"
 ssh_key_path = "{{ ssh_key_path }}"
 ssh_known_hosts = false

@@ -55,9 +55,9 @@
         state: started
 
     - name: Create ClickHouse database and table for logs
-      command: clickhouse-client --query="
-        CREATE DATABASE IF NOT EXISTS logs;
-        CREATE TABLE IF NOT EXISTS logs.vector_logs (
+      shell: |
+        clickhouse-client --query="CREATE DATABASE IF NOT EXISTS logs;"
+        clickhouse-client --query="CREATE TABLE IF NOT EXISTS logs.vector_logs (
         timestamp DateTime DEFAULT now(),
         host String,
         log_type String,
@@ -65,9 +65,10 @@
         ) ENGINE = MergeTree()
         ORDER BY timestamp;"
       args:
-        creates: /var/lib/clickhouse
+        executable: /bin/bash
       register: create_db_result
-      changed_when: false
+      changed_when: "'Exception' not in create_db_result.stderr"
+
 
 
     - name: Show ClickHouse database creation result
@@ -125,3 +126,7 @@
           Lighthouse is available at:
           http://{{ hostvars['lighthouse-03'].ansible_host }}?user=default#
           http://{{ hostvars['clickhouse-01'].ansible_host }}:8123
+
+
+
+
