@@ -54,10 +54,21 @@
         enabled: true
         state: started
 
-    - name: Create ClickHouse database
-      shell: "clickhouse-client -q 'CREATE DATABASE IF NOT EXISTS logs;'"
+    - name: Create ClickHouse database and table for logs
+      command: clickhouse-client --query="
+        CREATE DATABASE IF NOT EXISTS logs;
+        CREATE TABLE IF NOT EXISTS logs.vector_logs (
+        timestamp DateTime DEFAULT now(),
+        host String,
+        log_type String,
+        message String
+        ) ENGINE = MergeTree()
+        ORDER BY timestamp;"
+      args:
+        creates: /var/lib/clickhouse
       register: create_db_result
       changed_when: false
+
 
     - name: Show ClickHouse database creation result
       debug:

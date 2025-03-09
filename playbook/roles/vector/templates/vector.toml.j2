@@ -1,9 +1,33 @@
-#  (шаблон конфигурации Vector)
-[sources.logs]
+[sources.clickhouse_logs]
 type = "file"
-include = [ "/var/log/*.log" ]
+include = ["/var/log/clickhouse-server/clickhouse-server.log"]
+read_from = "beginning"
 
-[sinks.stdout]
-inputs = ["logs"]
-type = "console"
-encoding.codec = "json"
+[sources.nginx_logs]
+type = "file"
+include = ["/var/log/nginx/access.log", "/var/log/nginx/error.log"]
+read_from = "beginning"
+
+[transforms.parse_clickhouse]
+type = "remap"
+inputs = ["clickhouse_logs"]
+source = '''
+. = parse_json!(string!(.message))
+'''
+
+[transforms.parse_nginx]
+type = "remap"
+inputs = ["nginx_logs"]
+source = '''
+. = parse_json!(string!(.message))
+'''
+
+[sinks.clickhouse]
+type = "clickhouse"
+inputs = ["parse_clickhouse", "parse_nginx"]
+endpoint = "http://{{ hostvars['clickhouse-01'].ansible_host }}:8123"
+database = "logs"
+table = "vector_logs"
+compression = "gzip"
+healthcheck = true
+batch.max_bytes = 10485760
