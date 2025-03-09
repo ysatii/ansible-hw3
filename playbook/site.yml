@@ -31,7 +31,24 @@
           - "{{ download_dir }}/clickhouse-common-static-{{ clickhouse_version }}.rpm"
         state: present
 
-    - name: Start ClickHouse service
+    - name: Copy ClickHouse configuration file
+      template:
+        src: config.xml.j2
+        dest: /etc/clickhouse-server/config.xml
+        owner: clickhouse
+        group: clickhouse
+        mode: '0644'
+      notify: Restart ClickHouse
+
+    - name: Enable read-write mode in ClickHouse
+      ansible.builtin.lineinfile:
+        path: /etc/clickhouse-server/users.xml
+        regexp: '<readonly>.*</readonly>'
+        line: '        <readonly>0</readonly>'
+      become: yes
+      notify: Restart ClickHouse
+
+    - name: Ensure ClickHouse service is enabled and started
       systemd:
         name: clickhouse-server
         enabled: true
@@ -46,8 +63,48 @@
       debug:
         var: create_db_result.stdout_lines
 
+    - name: Create and populate ClickHouse table
+      shell: |
+        clickhouse-client --query="CREATE TABLE IF NOT EXISTS test_table (id UInt32, name String) ENGINE = Log";
+        clickhouse-client --query="INSERT INTO test_table VALUES (1, 'Test')"
+      become: yes
+
+
+
+  handlers:
+    - name: Restart ClickHouse
+      systemd:
+        name: clickhouse-server
+        state: restarted
+
+
+
+
+
 - name: Install and configure Vector
   hosts: vector
   become: true
   roles:
     - vector
+
+- name: Install and configure LightHouse
+  hosts: lighthouse
+  become: true
+  roles:
+    - lighthouse
+
+- name: Check ClickHouse availability and show Lighthouse URL
+  hosts: lighthouse-03
+  gather_facts: yes
+  tasks:
+    - name: Check ClickHouse availability
+      uri:
+        url: "http://{{ hostvars['lighthouse-03'].ansible_host }}?user=default"
+        return_content: yes
+      register: clickhouse_response
+      ignore_errors: yes
+
+    - name: Show Lighthouse URL if ClickHouse is available
+      debug:
+        msg: "Lighthouse is available at: http://{{ hostvars['lighthouse-03'].ansible_host }}?user=default#http://{{ hostvars['clickhouse-01'].ansible_host }}:8123/"
+      when: clickhouse_response.status == 200

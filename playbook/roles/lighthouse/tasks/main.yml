@@ -1,0 +1,67 @@
+---
+- name: Add EPEL repository for Nginx
+  yum:
+        name: epel-release
+        state: present
+
+- name: Install required packages
+  yum:
+        name:
+          - nginx
+          - unzip
+        state: present
+
+- name: Start and enable Nginx service
+  systemd:
+    name: nginx
+    enabled: true
+    state: started
+
+- name: Download LightHouse static files
+  get_url:
+    url: "https://github.com/VKCOM/lighthouse/archive/refs/heads/master.zip"
+    dest: "/tmp/lighthouse.zip"
+
+- name: Extract LightHouse files
+  unarchive:
+    src: "/tmp/lighthouse.zip"
+    dest: "/usr/share/nginx/html/"
+    remote_src: yes
+
+- name: Configure Nginx for LightHouse
+  copy:
+    dest: "/etc/nginx/conf.d/lighthouse.conf"
+    content: |
+      server {
+          listen 80;
+          server_name _;
+          root /usr/share/nginx/html/lighthouse-master/;
+          index index.html;
+
+          location / {
+              try_files $uri /index.html;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+          }
+      }
+
+#- name: Configure LightHouse to connect to ClickHouse
+#  template:
+#    src: lighthouse_config.j2
+#    dest: /usr/share/nginx/html/lighthouse-master/config.js
+
+#- name: Replace 127.0.0.1:8123 with ClickHouse IP using lineinfile
+#  ansible.builtin.lineinfile:
+#    path: /usr/share/nginx/html/lighthouse-master/app.js
+#    regexp: '127\.0\.0\.1:8123'
+#    line: "{{ hostvars['clickhouse-01'].ansible_host }}:8123"
+#  become: yes
+#  notify: Restart Nginx
+
+
+
+
+- name: Restart Nginx
+  systemd:
+    name: nginx
+    state: restarted

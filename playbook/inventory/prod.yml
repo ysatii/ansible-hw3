@@ -1,15 +1,15 @@
 clickhouse:
   hosts:
     clickhouse-01:
-      ansible_host: 51.250.86.177
+      ansible_host: 89.169.158.76
       ansible_connection: ssh
       ansible_user: lamer
       ansible_ssh_private_key_file: ssh_env/id_rsa_insecure_clickhouse-01
 
 vector:
   hosts:
-    clickhouse-02:
-      ansible_host: 51.250.12.218
+    vector-02:
+      ansible_host: 158.160.34.19
       ansible_connection: ssh
       ansible_user: lamer
       ansible_ssh_private_key_file: ssh_env/id_rsa_insecure_vector-02
@@ -17,8 +17,8 @@ vector:
 
 lighthouse:
   hosts:
-    clickhouse-03:
-      ansible_host: 51.250.70.200
+    lighthouse-03:
+      ansible_host: "51.250.65.210"
       ansible_connection: ssh
       ansible_user: lamer
       ansible_ssh_private_key_file: ssh_env/id_rsa_insecure_lighthouse-03

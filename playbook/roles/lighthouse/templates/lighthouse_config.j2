@@ -1,0 +1,9 @@
+const CONFIG = {
+    api: {
+        server: "http://{{ hostvars['clickhouse-01'].ansible_host }}",
+        port: "8123",
+        user: "default",
+        password: "",
+        database: "logs"
+    }
+};
