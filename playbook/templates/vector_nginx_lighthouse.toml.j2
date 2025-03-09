@@ -3,19 +3,18 @@ type = "file"
 include = ["/var/log/nginx/access.log", "/var/log/nginx/error.log"]
 read_from = "beginning"
 
-[sources.lighthouse_logs]
-type = "file"
-include = ["/var/log/lighthouse/lighthouse.log"]
-read_from = "beginning"
-
 [transforms.parse_logs]
 type = "remap"
-inputs = ["nginx_logs", "lighthouse_logs"]
+inputs = ["nginx_logs"]
 source = '''
-. = parse_json!(string!(.message))
+.message = string!(.message)
+.timestamp = now()
+.host = get_env_var!("HOSTNAME") ?? "unknown-host"
+.log_type = "nginx"
 '''
 
 [sinks.vector]
 type = "vector"
 inputs = ["parse_logs"]
-address = "tcp://{{ clickhouse_host }}:6000"
+address = "http://{{ {{ hostvars['vector-02'].ansible_host }} }}:6000"
+encoding.codec = "json"

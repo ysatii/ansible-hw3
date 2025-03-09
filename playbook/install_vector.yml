@@ -6,8 +6,9 @@
     vector_version: "0.34.0"
     vector_download_url: "https://packages.timber.io/vector/0.34.0/vector-0.34.0-x86_64-unknown-linux-gnu.tar.gz"
     vector_install_path: "/usr/local/bin/vector"
-    vector_config_path: "/etc/vector/vector.toml"
+    vector_config_file: "/etc/vector/vector.toml"
     vector_user: "vector"
+    clickhouse_host: "{{ hostvars['clickhouse-01'].ansible_host }}"
 
   tasks:
     - name: Ensure necessary directories exist
@@ -53,17 +54,17 @@
     - name: Deploy Vector configuration for ClickHouse
       template:
         src: templates/vector_clickhouse.toml.j2
-        dest: "{{ vector_config_path }}"
+        dest: "{{ vector_config_file }}"
         mode: "0644"
       when: "'clickhouse' in group_names"
       notify: Restart Vector
 
-    - name: Deploy Vector configuration for Nginx/Lighthouse
+    - name: Deploy Vector configuration for Lighthouse
       template:
         src: templates/vector_nginx_lighthouse.toml.j2
-        dest: "{{ vector_config_path }}"
+        dest: "{{ vector_config_file }}"
         mode: "0644"
-      when: "'nginx-lighthouse' in group_names"
+      when: "'lighthouse' in group_names"
       notify: Restart Vector
 
     - name: Deploy Vector systemd service file
@@ -76,7 +77,7 @@
 
           [Service]
           User={{ vector_user }}
-          ExecStart={{ vector_install_path }} --config {{ vector_config_path }}
+          ExecStart={{ vector_install_path }} --config {{ vector_config_file }}
           Restart=always
           RestartSec=5
 
