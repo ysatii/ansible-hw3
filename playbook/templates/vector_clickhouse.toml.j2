@@ -1,18 +1,15 @@
-# Подключение к Vector на удаленном сервере по SSH
 [sources.ssh_logs]
 type = "vector"
 mode = "ssh"
-address = "{{ remote_user }}@{{ lighthouse_host }}"
+address = "{{ ansible_user }}@{{ lighthouse_host }}"
 command = "vector --config /etc/vector/vector_remote.toml"
-ssh_key_path = "{{ ssh_key_path }}"
+ssh_key_path = "/home/{{ ansible_user }}/.ssh/vector_key"
 ssh_known_hosts = false
 
-# Прием логов через сокет
 [sources.remote_logs]
 type = "socket"
 address = "127.0.0.1:6000"
 
-# Парсим логи
 [transforms.parse_logs]
 type = "remap"
 inputs = ["remote_logs"]
@@ -20,7 +17,6 @@ source = '''
 . = parse_json!(string!(.message))
 '''
 
-# Отправляем данные в ClickHouse
 [sinks.clickhouse]
 type = "clickhouse"
 inputs = ["parse_logs"]
@@ -30,3 +26,4 @@ table = "vector_logs"
 compression = "gzip"
 healthcheck = true
 batch.max_bytes = 10485760
+
