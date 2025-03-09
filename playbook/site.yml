@@ -4,7 +4,7 @@
   become: true
   vars:
     clickhouse_version: "23.8.2.7"
-    download_dir: "/home/{{ ansible_user }}/clickhouse"
+    download_dir: "/home/{{ ansible_user }}"
 
   tasks:
     - name: Ensure ClickHouse download directory exists
@@ -63,11 +63,11 @@
       debug:
         var: create_db_result.stdout_lines
 
-    - name: Create and populate ClickHouse table
-      shell: |
-        clickhouse-client --query="CREATE TABLE IF NOT EXISTS test_table (id UInt32, name String) ENGINE = Log";
-        clickhouse-client --query="INSERT INTO test_table VALUES (1, 'Test')"
-      become: yes
+    - name: Create ClickHouse table if not exists
+      command: clickhouse-client --query="CREATE TABLE IF NOT EXISTS test_table (id UInt32, name String) ENGINE = Log"
+      args:
+        creates: /var/lib/clickhouse/test_table
+
 
 
 
@@ -104,7 +104,13 @@
       register: clickhouse_response
       ignore_errors: yes
 
-    - name: Show Lighthouse URL if ClickHouse is available
-      debug:
-        msg: "Lighthouse is available at: http://{{ hostvars['lighthouse-03'].ansible_host }}?user=default#http://{{ hostvars['clickhouse-01'].ansible_host }}:8123/"
-      when: clickhouse_response.status == 200
+- name: Show Lighthouse URL if ClickHouse is available
+  hosts: lighthouse
+  become: no
+  tasks:
+    - name: Debug output
+      ansible.builtin.debug:
+        msg: >
+          Lighthouse is available at:
+          http://{{ hostvars['lighthouse-03'].ansible_host }}?user=default#
+          http://{{ hostvars['clickhouse-01'].ansible_host }}:8123
