@@ -1,0 +1,9 @@
+#  (шаблон конфигурации Vector)
+[sources.logs]
+type = "file"
+include = [ "/var/log/*.log" ]
+
+[sinks.stdout]
+inputs = ["logs"]
+type = "console"
+encoding.codec = "json"

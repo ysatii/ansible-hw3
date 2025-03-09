@@ -1,0 +1,40 @@
+---
+- name: Ensure Vector configuration directory exists
+  file:
+    path: "/etc/vector"
+    state: directory
+    mode: "0755"
+
+- name: Deploy Vector configuration from template
+  template:
+    src: vector.toml.j2
+    dest: "/etc/vector/vector.toml"
+    mode: "0644"
+  notify: Restart Vector
+
+- name: Create systemd service for Vector
+  copy:
+    dest: "/etc/systemd/system/vector.service"
+    content: |
+      [Unit]
+      Description=Vector Service
+      After=network.target
+
+      [Service]
+      ExecStart=/usr/local/bin/vector --config /etc/vector/vector.toml
+      Restart=always
+      User=root
+
+      [Install]
+      WantedBy=multi-user.target
+    mode: "0644"
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: Start and enable Vector service
+  systemd:
+    name: vector
+    enabled: true
+    state: started
