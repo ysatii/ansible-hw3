@@ -1,20 +1,33 @@
+# Источник логов из файлов
 [sources.nginx_logs]
 type = "file"
 include = ["/var/log/nginx/access.log", "/var/log/nginx/error.log"]
 read_from = "beginning"
 
+# Трансформация логов
 [transforms.parse_logs]
 type = "remap"
 inputs = ["nginx_logs"]
 source = '''
-.message = string!(.message)
-.timestamp = now()
-.host = get_env_var!("HOSTNAME") ?? "unknown-host"
+.timestamp, err = format_timestamp(now(), "%Y-%m-%d %H:%M:%S")
+.host = get_env_var("HOSTNAME") ?? "unknown-host"
 .log_type = "nginx"
+.message = encode_json(.message)
 '''
 
-[sinks.vector]
-type = "vector"
+# Отправка в ClickHouse
+[sinks.clickhouse]
+type = "clickhouse"
 inputs = ["parse_logs"]
-address = "http://{{ {{ hostvars['vector-02'].ansible_host }} }}:6000"
+endpoint = "http://{{ hostvars['clickhouse-01'].ansible_host }}:8123"
+database = "logs"
+table = "vector_logs"
+compression = "gzip"
+batch.max_bytes = 10485760
+encoding.timestamp_format = "rfc3339"
+
+# Отправка логов в консоль для отладки
+[sinks.debug_output]
+type = "console"
+inputs = ["parse_logs"]
 encoding.codec = "json"

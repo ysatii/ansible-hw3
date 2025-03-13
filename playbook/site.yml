@@ -93,11 +93,7 @@
 
 
 
-- name: Install and configure Vector
-  hosts: vector
-  become: true
-  roles:
-    - vector
+
 
 - name: Install and configure LightHouse
   hosts: lighthouse
@@ -124,8 +120,7 @@
       ansible.builtin.debug:
         msg: >
           Lighthouse is available at:
-          http://{{ hostvars['lighthouse-03'].ansible_host }}?user=default#
-          http://{{ hostvars['clickhouse-01'].ansible_host }}:8123
+          http://{{ hostvars['lighthouse-03'].ansible_host }}?user=default#http://{{ hostvars['clickhouse-01'].ansible_host }}:8123
 
 
 

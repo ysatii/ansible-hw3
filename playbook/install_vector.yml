@@ -1,6 +1,6 @@
 ---
 - name: Install and configure Vector
-  hosts: all
+  hosts: vector:clickhouse:lighthouse
   become: yes
   vars:
     vector_version: "0.34.0"
@@ -9,18 +9,27 @@
     vector_config_file: "/etc/vector/vector.toml"
     vector_user: "vector"
     clickhouse_host: "{{ hostvars['clickhouse-01'].ansible_host }}"
+    vector_host: "{{ hostvars['vector-02'].ansible_host }}"
 
   tasks:
+    - name: Ensure Vector user exists
+      user:
+        name: "vector"
+        system: yes
+        createhome: no
+        shell: /bin/false"
+
     - name: Ensure necessary directories exist
       file:
         path: "{{ item }}"
         state: directory
-        owner: "{{ vector_user }}"
-        group: "{{ vector_user }}"
+        owner: "vector"
+        group: "vector"
         mode: "0755"
       loop:
         - "/var/lib/vector"
         - "/etc/vector"
+
 
     - name: Download Vector
       get_url:
@@ -49,8 +58,9 @@
         name: "{{ vector_user }}"
         system: yes
         createhome: no
-        shell: /bin/false
+        shell: /bin/false"
 
+    # ⬇ Устанавливаем конфигурацию ТОЛЬКО для ClickHouse
     - name: Deploy Vector configuration for ClickHouse
       template:
         src: templates/vector_clickhouse.toml.j2
@@ -59,6 +69,16 @@
       when: "'clickhouse' in group_names"
       notify: Restart Vector
 
+    # ⬇ Устанавливаем конфигурацию ТОЛЬКО для Vector-сервера
+    - name: Deploy Vector configuration for Vector Server
+      template:
+        src: templates/vector_vector.toml.j2
+        dest: "{{ vector_config_file }}"
+        mode: "0644"
+      when: "'vector' in group_names"
+      notify: Restart Vector
+
+    # ⬇ Устанавливаем конфигурацию ТОЛЬКО для Lighthouse/Nginx
     - name: Deploy Vector configuration for Lighthouse
       template:
         src: templates/vector_nginx_lighthouse.toml.j2
