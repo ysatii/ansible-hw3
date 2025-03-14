@@ -1,12 +1,3 @@
-# Подключение к Vector на удаленном сервере по SSH
-[sources.ssh_logs]
-type = "vector"
-mode = "ssh"
-address = "lamer@nginx-lighthouse"
-command = "vector --config /etc/vector/vector_remote.toml"
-ssh_key_path = "/home/lamer/.ssh/vector_key"  # Указываем путь к приватному ключу
-ssh_known_hosts = false  # Можно включить проверку known_hosts, если требуется
-
 # Прием логов через сокет
 [sources.remote_logs]
 type = "socket"

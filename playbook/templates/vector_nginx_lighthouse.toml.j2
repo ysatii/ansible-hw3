@@ -1,33 +1,38 @@
-# Источник логов из файлов
+# 📌 Источник логов из файлов
 [sources.nginx_logs]
 type = "file"
 include = ["/var/log/nginx/access.log", "/var/log/nginx/error.log"]
 read_from = "beginning"
 
-# Трансформация логов
+# 📌 Преобразование логов
 [transforms.parse_logs]
 type = "remap"
 inputs = ["nginx_logs"]
 source = '''
 .timestamp, err = format_timestamp(now(), "%Y-%m-%d %H:%M:%S")
-.host = get_env_var("HOSTNAME") ?? "unknown-host"
+.host = get_env_var("HOSTNAME") ?? "lighthouse"
 .log_type = "nginx"
-.message = encode_json(.message)
 '''
 
-# Отправка в ClickHouse
-[sinks.clickhouse]
-type = "clickhouse"
+# 📌 Фильтр пустых сообщений
+[transforms.filter_empty_logs]
+type = "filter"
 inputs = ["parse_logs"]
-endpoint = "http://{{ hostvars['clickhouse-01'].ansible_host }}:8123"
-database = "logs"
-table = "vector_logs"
-compression = "gzip"
-batch.max_bytes = 10485760
-encoding.timestamp_format = "rfc3339"
+condition = '''
+exists(.message) && .message != ""
+'''
 
-# Отправка логов в консоль для отладки
+# 📌 Отправка логов в другой Vector (compute-vm-clickhouse2)
+[sinks.vector_sink]
+type = "vector"
+inputs = ["filter_empty_logs"]  # Обновлено! Используем корректный input
+address = "{{ hostvars['vector-02'].ansible_host }}:6000"   
+batch.max_bytes = 1048576
+batch.timeout_secs = 5
+version = "2"
+
+# 📌 Отправка в консоль для дебага
 [sinks.debug_output]
 type = "console"
-inputs = ["parse_logs"]
+inputs = ["filter_empty_logs"]  # Обновлено! Используем корректный input
 encoding.codec = "json"

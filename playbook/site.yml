@@ -33,7 +33,16 @@
 
     - name: Copy ClickHouse configuration file
       template:
-        src: config.xml.j2
+        src: clickhouse_server_config.j2
+        dest: /etc/clickhouse-server/config.xml
+        owner: clickhouse
+        group: clickhouse
+        mode: '0644'
+      notify: Restart ClickHouse
+
+    - name: Copy ClickHouse user configuration file
+      template:
+        src: clickhouse_server_users.j2
         dest: /etc/clickhouse-server/config.xml
         owner: clickhouse
         group: clickhouse
@@ -70,7 +79,6 @@
       changed_when: "'Exception' not in create_db_result.stderr"
 
 
-
     - name: Show ClickHouse database creation result
       debug:
         var: create_db_result.stdout_lines
@@ -80,20 +88,11 @@
       args:
         creates: /var/lib/clickhouse/test_table
 
-
-
-
   handlers:
     - name: Restart ClickHouse
       systemd:
         name: clickhouse-server
         state: restarted
-
-
-
-
-
-
 
 - name: Install and configure LightHouse
   hosts: lighthouse

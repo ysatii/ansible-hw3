@@ -1,6 +1,6 @@
 ---
 - name: Install and configure Vector
-  hosts: vector:clickhouse:lighthouse
+  hosts: vector:lighthouse
   become: yes
   vars:
     vector_version: "0.34.0"
@@ -97,6 +97,36 @@
           [Install]
           WantedBy=multi-user.target
       notify: Restart Vector
+
+    - name: Ensure Vector user is in nginx group
+      user:
+        name: "{{ vector_user }}"
+        groups: nginx
+        append: yes
+
+    - name: Change permissions for Nginx log directory
+      file:
+        path: /var/log/nginx
+        state: directory
+        owner: nginx
+        group: nginx
+        mode: "0755"
+
+    - name: Change permissions for Nginx access log
+      file:
+        path: /var/log/nginx/access.log
+        state: file
+        owner: nginx
+        group: nginx
+        mode: "0640"
+
+    - name: Change permissions for Nginx error log
+      file:
+        path: /var/log/nginx/error.log
+        state: file
+        owner: nginx
+        group: nginx
+        mode: "0640"
 
     - name: Enable and start Vector service
       systemd:

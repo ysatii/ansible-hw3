@@ -6,7 +6,7 @@
 
     <http_port>8123</http_port>
     <tcp_port>9000</tcp_port>
-    <listen_host>0.0.0.0</listen_host>
+    <listen_host>::</listen_host>
 
     <users>
         <default>
@@ -26,6 +26,24 @@
             <use_uncompressed_cache>1</use_uncompressed_cache>
             <load_balancing>random</load_balancing>
             <max_threads>4</max_threads>
+            <log_queries>1</log_queries>  <!-- ✅ Правильное место для log_queries -->
         </default>
     </profiles>
+
+    <!-- Включаем логирование запросов -->
+    <query_log>
+        <database>system</database>
+        <table>query_log</table>
+        <flush_interval_milliseconds>1000</flush_interval_milliseconds>
+    </query_log>
+
+    <query_thread_log>
+        <database>system</database>
+        <table>query_thread_log</table>
+    </query_thread_log>
+
+    <query_views_log>
+        <database>system</database>
+        <table>query_views_log</table>
+    </query_views_log>
 </clickhouse>
