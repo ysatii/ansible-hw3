@@ -1,4 +1,12 @@
 ---
+- name: Set timezone to Europe/Moscow
+  hosts: all
+  become: true
+  tasks:
+    - name: Ensure timezone is set using Ansible module
+      community.general.timezone:
+        name: Europe/Moscow
+
 - name: Install and configure Vector
   hosts: vector:lighthouse
   become: yes
@@ -103,6 +111,7 @@
         name: "{{ vector_user }}"
         groups: nginx
         append: yes
+      when: "'lighthouse' in group_names"
 
     - name: Change permissions for Nginx log directory
       file:
@@ -111,6 +120,7 @@
         owner: nginx
         group: nginx
         mode: "0755"
+      when: "'lighthouse' in group_names"
 
     - name: Change permissions for Nginx access log
       file:
@@ -119,6 +129,7 @@
         owner: nginx
         group: nginx
         mode: "0640"
+      when: "'lighthouse' in group_names"
 
     - name: Change permissions for Nginx error log
       file:
@@ -127,12 +138,23 @@
         owner: nginx
         group: nginx
         mode: "0640"
+      when: "'lighthouse' in group_names"
+
+    
+
+    - name: Перезапустить systemd для применения изменений
+      command: systemctl daemon-reexec
 
     - name: Enable and start Vector service
       systemd:
         name: vector
         enabled: yes
         state: started
+    
+    - name: Restart Vector
+      systemd:
+        name: vector
+        state: restarted
 
   handlers:
     - name: Restart Vector

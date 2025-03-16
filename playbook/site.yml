@@ -1,4 +1,12 @@
 ---
+- name: Set timezone to Europe/Moscow
+  hosts: all
+  become: true
+  tasks:
+    - name: Ensure timezone is set using Ansible module
+      community.general.timezone:
+        name: Europe/Moscow
+
 - name: Install Clickhouse
   hosts: clickhouse
   become: true
@@ -43,7 +51,7 @@
     - name: Copy ClickHouse user configuration file
       template:
         src: clickhouse_server_users.j2
-        dest: /etc/clickhouse-server/config.xml
+        dest: /etc/clickhouse-server/user.xml
         owner: clickhouse
         group: clickhouse
         mode: '0644'
@@ -79,14 +87,14 @@
       changed_when: "'Exception' not in create_db_result.stderr"
 
 
-    - name: Show ClickHouse database creation result
-      debug:
-        var: create_db_result.stdout_lines
+    #- name: Show ClickHouse database creation result
+    #  debug:
+    #    var: create_db_result.stdout_lines
 
-    - name: Create ClickHouse table if not exists
-      command: clickhouse-client --query="CREATE TABLE IF NOT EXISTS test_table (id UInt32, name String) ENGINE = Log"
-      args:
-        creates: /var/lib/clickhouse/test_table
+    #- name: Create ClickHouse table if not exists
+    #  command: clickhouse-client --query="CREATE TABLE IF NOT EXISTS test_table (id UInt32, name String) ENGINE = Log"
+    #  args:
+    #    creates: /var/lib/clickhouse/test_table
 
   handlers:
     - name: Restart ClickHouse
@@ -120,7 +128,6 @@
         msg: >
           Lighthouse is available at:
           http://{{ hostvars['lighthouse-03'].ansible_host }}?user=default#http://{{ hostvars['clickhouse-01'].ansible_host }}:8123
-
 
 
 

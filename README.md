@@ -102,6 +102,7 @@ lighthouse:
 
 ## Решение  9.
 
+
 ##  Что делает Playbook?
 Этот Ansible Playbook предназначен для автоматизированной установки и настройки следующих компонентов:
 
@@ -110,7 +111,29 @@ lighthouse:
 3. **Nginx** – веб-сервер для работы с Lighthouse.
 4. **Vector** – система сбора и обработки логов.
 
-##  Основные этапы выполнения Playbook
+#  Основные этапы выполнения Playbook
+
+##  Установите сначала коллекции их может не быть
+```sh
+ansible-galaxy collection install community.general
+```
+## Команды для управления и мониторинга
+перезапуск вектор на машине lighthouse-03 или вектор 
+```
+sudo systemctl restart vector
+```
+
+редактирование файла настроек
+```
+nano /etc/vector/vector.toml
+```
+
+
+ппросмотр логов 
+ёёё
+sudo journalctl -u vector -n 50 --no-pager -f
+echo '{"timestamp":"2025-03-14T21:50:00Z","host":"lighthouse","log_type":"nginx","message":"test log"}' | nc 62.84.119.228 6000
+
 
 ###  **1. Установка ClickHouse**
 - Загружает и устанавливает указанную версию ClickHouse.

@@ -1,10 +1,10 @@
-# 📌 Источник логов из файлов
+#  Источник логов из файлов
 [sources.nginx_logs]
 type = "file"
 include = ["/var/log/nginx/access.log", "/var/log/nginx/error.log"]
 read_from = "beginning"
 
-# 📌 Преобразование логов
+#  Преобразование логов
 [transforms.parse_logs]
 type = "remap"
 inputs = ["nginx_logs"]
@@ -14,7 +14,7 @@ source = '''
 .log_type = "nginx"
 '''
 
-# 📌 Фильтр пустых сообщений
+#  Фильтр пустых сообщений
 [transforms.filter_empty_logs]
 type = "filter"
 inputs = ["parse_logs"]
@@ -22,7 +22,7 @@ condition = '''
 exists(.message) && .message != ""
 '''
 
-# 📌 Отправка логов в другой Vector (compute-vm-clickhouse2)
+#  Отправка логов в другой Vector (compute-vm-clickhouse2)
 [sinks.vector_sink]
 type = "vector"
 inputs = ["filter_empty_logs"]  # Обновлено! Используем корректный input
@@ -31,8 +31,11 @@ batch.max_bytes = 1048576
 batch.timeout_secs = 5
 version = "2"
 
-# 📌 Отправка в консоль для дебага
+#  Отправка в консоль для дебага
 [sinks.debug_output]
 type = "console"
 inputs = ["filter_empty_logs"]  # Обновлено! Используем корректный input
 encoding.codec = "json"
+
+[api]
+enabled = true

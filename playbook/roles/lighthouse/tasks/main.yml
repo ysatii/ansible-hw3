@@ -45,6 +45,8 @@
           }
       }
 
+
+
 #- name: Configure LightHouse to connect to ClickHouse
 #  template:
 #    src: lighthouse_config.j2
