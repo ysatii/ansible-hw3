@@ -1,12 +1,4 @@
 ---
-- name: Set timezone to Europe/Moscow
-  hosts: all
-  become: true
-  tasks:
-    - name: Ensure timezone is set using Ansible module
-      community.general.timezone:
-        name: Europe/Moscow
-
 - name: Install and configure Vector
   hosts: vector:lighthouse
   become: yes
@@ -155,6 +147,8 @@
       systemd:
         name: vector
         state: restarted
+
+    
 
   handlers:
     - name: Restart Vector

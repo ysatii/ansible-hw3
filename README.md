@@ -128,12 +128,15 @@ sudo systemctl restart vector
 nano /etc/vector/vector.toml
 ```
 
-
-ппросмотр логов 
-ёёё
+просмотр логов 
+```
 sudo journalctl -u vector -n 50 --no-pager -f
-echo '{"timestamp":"2025-03-14T21:50:00Z","host":"lighthouse","log_type":"nginx","message":"test log"}' | nc 62.84.119.228 6000
+```
 
+проверка приема данных на основном сервере vector! сервер lighthouse/nginx с помощью vector получает логи с nginx и передает их на основной вектор
+```
+echo '{"timestamp":"2025-03-14T21:50:00Z","host":"lighthouse","log_type":"nginx","message":"test log"}' | nc 62.84.119.228 6000
+```
 
 ###  **1. Установка ClickHouse**
 - Загружает и устанавливает указанную версию ClickHouse.
