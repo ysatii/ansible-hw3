@@ -35,6 +35,9 @@ apt - не требуеться у нас операционная Centos7 и
 
 ### Задание 3. 
 Tasks должны: скачать статику LightHouse, установить Nginx или любой другой веб-сервер, настроить его конфиг для открытия LightHouse, запустить веб-сервер.
+![рис 8](https://github.com/ysatii/ansible-hw3/blob/main/img/img_ansble8.jpg) 
+![рис 9](https://github.com/ysatii/ansible-hw3/blob/main/img/img_ansble9.jpg) 
+![рис 10](https://github.com/ysatii/ansible-hw3/blob/main/img/img_ansble10.jpg) 
 
 ### Задание 4.
  Подготовьте свой inventory-файл `prod.yml`.
@@ -94,9 +97,7 @@ lighthouse:
 ![рис 5](https://github.com/ysatii/ansible-hw3/blob/main/img/img_ansble5.jpg) 
 ![рис 6](https://github.com/ysatii/ansible-hw3/blob/main/img/img_ansble6.jpg) 
 ![рис 7](https://github.com/ysatii/ansible-hw3/blob/main/img/img_ansble7.jpg) 
-![рис 8](https://github.com/ysatii/ansible-hw3/blob/main/img/img_ansble8.jpg) 
-![рис 9](https://github.com/ysatii/ansible-hw3/blob/main/img/img_ansble9.jpg) 
-![рис 10](https://github.com/ysatii/ansible-hw3/blob/main/img/img_ansble10.jpg) 
+
 
 произошла только часть изменений каких как перезапуск веб сервера и попытка создания таблиц
 
@@ -113,8 +114,25 @@ lighthouse:
 
 1. **ClickHouse** – мощная колонночная СУБД.
 2. **Lighthouse** – веб-интерфейс для работы с ClickHouse.
-3. **Nginx** – веб-сервер для работы с Lighthouse.
-4. **Vector** – система сбора и обработки логов.
+3. **Nginx** – веб-сервер для работы с Lighthouse.  **Vector** – система сбора и обработки логов.
+
+# site.yml (основной плейбук)
+
+Этот плейбук выполняет несколько ключевых действий:
+
+    Устанавливает временную зону на Europe/Moscow для всех серверов.
+    Устанавливает ClickHouse на серверах clickhouse:
+        Загружает .rpm пакеты ClickHouse.
+        Устанавливает их с помощью yum.
+        Разворачивает конфигурационные файлы ClickHouse (config.xml, users.xml).
+        Создаёт базу данных logs и таблицу vector_logs.
+        Перезапускает ClickHouse.
+    Устанавливает и настраивает LightHouse на lighthouse:
+        Устанавливает Nginx и необходимые зависимости.
+        Загружает и разархивирует LightHouse.
+        Настраивает конфигурацию Nginx.
+        Перезапускает Nginx.
+    Проверяет доступность ClickHouse и выводит URL LightHouse.
 
 #  Основные этапы выполнения Playbook
 
@@ -123,7 +141,7 @@ lighthouse:
 ansible-galaxy collection install community.general
 ```
 ## Команды для управления и мониторинга
-перезапуск вектор на машине lighthouse-03 или вектор 
+перезапуск вектор на машине lighthouse или вектор 
 ```
 sudo systemctl restart vector
 ```
@@ -139,6 +157,7 @@ sudo journalctl -u vector -n 50 --no-pager -f
 ```
 
 проверка приема данных на основном сервере vector! сервер lighthouse/nginx с помощью vector получает логи с nginx и передает их на основной вектор
+
 ```
 echo '{"timestamp":"2025-03-14T21:50:00Z","host":"lighthouse","log_type":"nginx","message":"test log"}' | nc 62.84.119.228 6000
 ```
@@ -166,6 +185,22 @@ enabled = true
 - Копирует конфигурационный файл.
 - Создает systemd-сервис для Vector.
 - Запускает и включает Vector в автозагрузку.
+Vector устанавливаеться на двух машинах на самой машине vector и на машине Lighthouse/nginx 
+
+с машины Lighthouse/nginx логи передаються на машину с vector далее в бд установленную на машине ClickHouse
+
+ 
+# install_vector.yml (установка и настройка Vector)
+
+Этот playbook выполняет установку и настройку Vector на серверах групп vector и lighthouse:
+
+    Создаёт системного пользователя vector.
+    Создаёт необходимые директории (/var/lib/vector, /etc/vector).
+    Загружает и устанавливает Vector версии 0.34.0.
+    Разворачивает конфигурационный файл Vector (vector.toml).
+    Создаёт systemd-сервис для Vector и включает его автозапуск.
+    На сервере с Nginx (группа lighthouse) Vector собирает логи Nginx и отправляет их на отдельный сервер с Vector (группа vector).
+    Перезапускает сервис Vector.
 
 ##  Переменные Playbook
 | Переменная            | Значение (по умолчанию)             | Описание |
@@ -191,7 +226,9 @@ enabled = true
    ansible-playbook -i inventory/prod.yml site.yml --diff
    ```
 
-После выполнения Playbook ClickHouse, Lighthouse и Vector будут настроены и запущены автоматически.
+После выполнения Playbook ClickHouse, Lighthouse будут настроены и запущены автоматически.
+Установка и настройка vector осществляеться плайбуком [install_vector.yml](https://github.com/ysatii/ansible-hw3/blob/main/playbook/install_vector.yml)
+
 
 
 
@@ -204,42 +241,7 @@ enabled = true
 
 Выполненное домашнее задание пришлите в виде ссылки на .md-файл в вашем репозитории.
 
----
-
-
-
-Описание работы скриптов развертывания Ansible
-1. install_vector.yml (установка и настройка Vector)
-
-Этот playbook выполняет установку и настройку Vector на серверах групп vector и lighthouse:
-
-    Создаёт системного пользователя vector.
-    Создаёт необходимые директории (/var/lib/vector, /etc/vector).
-    Загружает и устанавливает Vector версии 0.34.0.
-    Разворачивает конфигурационный файл Vector (vector.toml).
-    Создаёт systemd-сервис для Vector и включает его автозапуск.
-    На сервере с Nginx (группа lighthouse) Vector собирает логи Nginx и отправляет их на отдельный сервер с Vector (группа vector).
-    Перезапускает сервис Vector.
-
-2. site.yml (основной плейбук)
-
-Этот плейбук выполняет несколько ключевых действий:
-
-    Устанавливает временную зону на Europe/Moscow для всех серверов.
-    Устанавливает ClickHouse на серверах clickhouse:
-        Загружает .rpm пакеты ClickHouse.
-        Устанавливает их с помощью yum.
-        Разворачивает конфигурационные файлы ClickHouse (config.xml, users.xml).
-        Создаёт базу данных logs и таблицу vector_logs.
-        Перезапускает ClickHouse.
-    Устанавливает и настраивает LightHouse на lighthouse:
-        Устанавливает Nginx и необходимые зависимости.
-        Загружает и разархивирует LightHouse.
-        Настраивает конфигурацию Nginx.
-        Перезапускает Nginx.
-    Проверяет доступность ClickHouse и выводит URL LightHouse.
-
-3. roles/lighthouse/tasks/main.yml (установка Lighthouse)
+ roles/lighthouse/tasks/main.yml (установка Lighthouse)
 
     Устанавливает nginx и unzip через yum.
     Загружает LightHouse с GitHub.
@@ -247,7 +249,7 @@ enabled = true
     Настраивает конфигурацию Nginx для работы с LightHouse.
     Перезапускает Nginx.
 
-4. roles/vector/tasks/main.yml (установка Vector)
+ roles/vector/tasks/main.yml (установка Vector)
 
     Устанавливает и настраивает Vector на vector, clickhouse, lighthouse.
     Создаёт необходимые каталоги и системного пользователя.
